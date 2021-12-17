@@ -11,18 +11,20 @@ class Personaje:
         self.app = app
         self.pos_matriz = pos
         self.pos_pix = self.getPixPos()
+        self.puede_moverse = True
+        self.direccion = vec(1,0)
 
-    def mover(self, direccion):
-        self.direccion = direccion
+    def moverse(self, direccion):
+        self.pos_matriz += direccion;
 
     def getPixPos(self):
         return vec((self.pos_matriz.x*self.app.ancho_celda) + BORDE, (self.pos_matriz.y*self.app.alto_celda)+BORDE)
         print(self.pos_matriz,self.pos_pix)
 
-    @staticmethod
-    def dibujarPerson(self, url, screen, posicion):
-        imagen = pygame.image.load(url)
+    def dibujarPerson(self,screen):
+        imagen = pygame.image.load("imgs/pj2-frente.png")
         imagen = pygame.transform.scale(imagen, (29, 39))
+        posicion = self.pos_matriz
         screen.blit(imagen, posicion)
 
     def PuedeMoverse(self):

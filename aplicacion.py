@@ -3,7 +3,7 @@ import sys
 import pygame
 import personaje
 from Configuracion import *
-from personaje import *
+
 
 # INICIO
 pygame.init()
@@ -19,6 +19,7 @@ class Aplicacion:
         self.estado = 'intro'
         self.ancho_celda = ANCHO_JUEGO // 19
         self.alto_celda = ALTO_JUEGO // 21
+        self.personaje = personaje.Personaje(self,vec(POS_INI_X,POS_INI_Y))
         self.muros = []
         self.cargar()
 
@@ -63,6 +64,7 @@ class Aplicacion:
             pygame.draw.line(self.fondo, Gris,(x*ANCHO_JUEGO//19,0),(x*ANCHO_JUEGO//19,ALTO))
         for y in range(ALTO_JUEGO // 21):
             pygame.draw.line(self.fondo, Gris, (0,y * ALTO_JUEGO//21),(ANCHO,y * ALTO_JUEGO//21))
+    def dibujarMuros(self):
         #Comprobación de que los muros están bien definidos
         for muro in self.muros:
             pygame.draw.rect(self.fondo, Morado, (muro.x*ANCHO_JUEGO//19, muro.y*ALTO_JUEGO//21, self.ancho_celda, self.alto_celda))
@@ -96,14 +98,13 @@ class Aplicacion:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    pass
+                    self.personaje.moverse(vec(-ANCHO_JUEGO/19,0))
                 if event.key == pygame.K_RIGHT:
-                    pass
+                    self.personaje.moverse(vec(ANCHO_JUEGO/19,0))
                 if event.key == pygame.K_UP:
-                    pass
+                    self.personaje.moverse(vec(0,-ALTO_JUEGO/21))
                 if event.key == pygame.K_DOWN:
-                    Personaje.dibujarPerson(self, "imgs/pj2-frente.png", self.screen, ((BORDE//2 + self.ancho_celda * 4), (BORDE//2 + self.alto_celda * 4)))
-                    pygame.display.update()
+                    self.personaje.moverse(vec(0, ALTO_JUEGO/21))
 
     def jugando_actualizar(self):
         pass
@@ -112,5 +113,6 @@ class Aplicacion:
         # self.screen.fill(Negro)
         self.screen.blit(self.fondo, (BORDE//2,BORDE//2))
         self.dibujarMatriz()
-        Personaje.dibujarPerson(self,"imgs/pj2-frente.png",self.screen,((BORDE//2+self.ancho_celda*1.2),(BORDE//2+self.alto_celda*1.05)))
+        # self.dibujarMuros()
+        self.personaje.dibujarPerson(self.screen)
         pygame.display.update()
