@@ -1,7 +1,7 @@
 import os.path
 import sys
 import pygame
-import personaje
+from personaje import *
 from Configuracion import *
 
 
@@ -17,9 +17,9 @@ class Aplicacion:
         self.clock = pygame.time.Clock()
         self.running = True
         self.estado = 'intro'
-        self.ancho_celda = ANCHO_JUEGO // 19
-        self.alto_celda = ALTO_JUEGO // 21
-        self.personaje = personaje.Personaje(self,vec(POS_INI_X,POS_INI_Y))
+        self.ancho_celda = (ANCHO_JUEGO // 19)
+        self.alto_celda = (ALTO_JUEGO // 21)
+        self.personaje = Personaje(self,vec(1,1))
         self.muros = []
         self.cargar()
 
@@ -98,19 +98,19 @@ class Aplicacion:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    self.personaje.moverse(vec(-ANCHO_JUEGO/19,0))
+                    self.personaje.moverse(vec(-1,0))
                 if event.key == pygame.K_RIGHT:
-                    self.personaje.moverse(vec(ANCHO_JUEGO/19,0))
+                    self.personaje.moverse(vec(1,0))
                 if event.key == pygame.K_UP:
-                    self.personaje.moverse(vec(0,-ALTO_JUEGO/21))
+                    self.personaje.moverse(vec(0,-1))
                 if event.key == pygame.K_DOWN:
-                    self.personaje.moverse(vec(0, ALTO_JUEGO/21))
+                    self.personaje.moverse(vec(0,1))
 
     def jugando_actualizar(self):
-        pass
+        self.personaje.actualizar()
 
     def jugando_graficos(self):
-        # self.screen.fill(Negro)
+        self.screen.fill(Negro)
         self.screen.blit(self.fondo, (BORDE//2,BORDE//2))
         self.dibujarMatriz()
         # self.dibujarMuros()
