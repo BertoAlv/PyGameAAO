@@ -112,7 +112,7 @@ class Aplicacion:
     def jugando_graficos(self):
         self.screen.fill(Negro)
         self.screen.blit(self.fondo, (BORDE//2,BORDE//2))
-        self.dibujarMatriz()
-        # self.dibujarMuros()
+        #self.dibujarMatriz()
+        #self.dibujarMuros()
         self.personaje.dibujarPerson(self.screen)
         pygame.display.update()

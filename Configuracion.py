@@ -2,7 +2,7 @@ import pygame.image
 from pygame.math import Vector2 as vec
 
 #PANTALLA
-ANCHO, ALTO = 912,966
+ANCHO, ALTO = 925,973
 BORDE = 70
 ANCHO_JUEGO,ALTO_JUEGO = ANCHO - BORDE, ALTO - BORDE
 FPS = 60
