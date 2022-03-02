@@ -24,7 +24,8 @@ Cian = (44,167,190)
 Morado = (163, 73, 164)
 Rojo = (255,0,0)
 
-#PERSONAJE
+#BASE DE DATOS
 
-POS_INI_X = (BORDE//2 + ANCHO_JUEGO/19 * 1.2)
-POS_INI_Y = (BORDE//2 + ALTO_JUEGO/21 * 1.05)
+DBFILE = "bbdd.sqlite"
+
+

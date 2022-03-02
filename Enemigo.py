@@ -26,7 +26,7 @@ class Enemigo:
         self.pos_matriz.y = (self.pos_pix.y - 35) // self.app.alto_celda
 
     def dibujar_enemigo(self):
-        imagen = pygame.image.load("imgs/snake-final.png")
+        imagen = pygame.image.load("imgs/snake-final.png").convert()
         imagen = pygame.transform.scale(imagen, (25, 34))
         posicion = (int(self.pos_pix.x), int(self.pos_pix.y))
         #pygame.draw.rect(self.app.fondo, Rojo, (self.pos_matriz.x * self.app.ancho_celda, self.pos_matriz.y * self.app.alto_celda, self.app.ancho_celda,self.app.alto_celda), 1)
@@ -49,11 +49,11 @@ class Enemigo:
 
     def set_actuacion(self):
         if self.indice == 0:
-            return "buscadora"
+            return "aleatoria2"
         if self.indice == 1:
             return "aleatoria"
         if self.indice == 2:
-            return "aleatoria2"
+            return "buscadora"
         if self.indice == 3:
             return "buscadora2"
 

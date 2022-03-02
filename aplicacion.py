@@ -1,9 +1,13 @@
 import os.path
 import sys
 import pygame
+
+import conexion
 from personaje import *
+from conexion import *
 from Configuracion import *
 from Enemigo import *
+from datetime import datetime
 
 
 # INICIO
@@ -20,16 +24,22 @@ class Aplicacion:
         self.estado = 'intro'
         self.ancho_celda = (ANCHO_JUEGO // 19)
         self.alto_celda = (ALTO_JUEGO // 21)
-        self.personaje = Personaje(self,vec(1,1))
+        self.pos_inicial = None
         self.muros = []
         self.llaves = []
         self.enemigos=[]
         self.pos_enemigo = []
         self.cargar()
+        self.personaje = Personaje(self, vec(self.pos_inicial))
         self.cargar_enemigo()
-        self.sumador_puntuacion = pygame.USEREVENT+1
+        self.puntuacion_maxima = 0
+        self.restador_puntuacion = pygame.USEREVENT+1
+        pygame.time.set_timer(self.restador_puntuacion,2000)
 
     def run(self):
+        conexion.Conexion.crearBD(DBFILE)
+        conexion.Conexion.conectarBD(DBFILE)
+        self.cargar_puntuacion()
         while self.running:
             if self.estado == 'intro':
                 self.inicio_eventos()
@@ -39,11 +49,16 @@ class Aplicacion:
                 self.jugando_eventos()
                 self.jugando_actualizar()
                 self.jugando_graficos()
+                if pygame.event.get(self.restador_puntuacion):
+                    self.personaje.puntuacion -= 1
             if self.estado == 'GAME OVER':
                 self.gameover_eventos()
                 self.gameover_actualizar()
                 self.gameover_graficos()
-                pass
+            if self.estado == 'ganar':
+                self.ganar_eventos()
+                self.ganar_actualizar()
+                self.ganar_graficos()
             self.clock.tick(FPS)
         pygame.quit()
         sys.exit()
@@ -71,6 +86,8 @@ class Aplicacion:
                         self.llaves.append(vec(xwall,ywall))
                     elif char in ["2","3","4","5"]:
                         self.pos_enemigo.append(vec(xwall,ywall))
+                    elif char == "A":
+                        self.pos_inicial = [xwall,ywall]
                     elif char == "P":
                         pygame.draw.rect(self.fondo,Negro,(xwall*self.ancho_celda,ywall*self.alto_celda,self.ancho_celda,self.alto_celda))
 
@@ -98,23 +115,51 @@ class Aplicacion:
             self.screen.blit(dibujo,(int(llave.x*ANCHO_JUEGO//19)+14+35, int(llave.y*ALTO_JUEGO//21)+7+35))
 
     def reset(self):
-        self.personaje.vidas = 3
+        self.personaje.vidas = 2
         self.personaje.puntuacion = 0
-        self.personaje.pos_matriz = vec(1,1)
-        self.personaje.pix_pos = self.personaje.getPixPos()
-        self.personaje.direction = vec(1,0)
+        self.personaje.pos_matriz = vec(self.personaje.pos_inicial)
+        self.personaje.pos_pix = self.personaje.getPixPos()
+        self.personaje.direccion = vec(0,0)
         for enemigo in self.enemigos:
             enemigo.pos_matriz = vec(enemigo.pos_inicial)
             enemigo.pos_pix = enemigo.getPixpos()
-            enemigo.direction *= 0
+            enemigo.direccion *= 0
 
-        self.coins = []
-        with open("walls.txt", 'r') as file:
+        self.llaves = []
+        with open("mapa_de_juego.txt", 'r') as file:
             for yidx, line in enumerate(file):
                 for xidx, char in enumerate(line):
-                    if char == 'C':
-                        self.coins.append(vec(xidx, yidx))
-        self.state = "playing"
+                    if char == 'L':
+                        self.llaves.append(vec(xidx, yidx))
+        self.estado = "jugando"
+
+    def reset_sin_iniciar(self):
+        self.personaje.vidas = 2
+        self.personaje.puntuacion = 0
+        self.personaje.pos_matriz = vec(self.personaje.pos_inicial)
+        self.personaje.pos_pix = self.personaje.getPixPos()
+        self.personaje.direccion = vec(0,0)
+        for enemigo in self.enemigos:
+            enemigo.pos_matriz = vec(enemigo.pos_inicial)
+            enemigo.pos_pix = enemigo.getPixpos()
+            enemigo.direccion *= 0
+
+        self.llaves = []
+        with open("mapa_de_juego.txt", 'r') as file:
+            for yidx, line in enumerate(file):
+                for xidx, char in enumerate(line):
+                    if char == 'L':
+                        self.llaves.append(vec(xidx, yidx))
+
+    def cargar_puntuacion(self):
+        query = QtSql.QSqlQuery()
+        query.prepare('SELECT max_puntos FROM puntuacion DESC')
+        if query.exec():
+            while query.next():
+                self.puntuacion_maxima = query.value(0)
+        else:
+            print('fallo al sacar la puntuacion')
+
 
     ######################################FUNCIONES DE PANTALLA INICIAL######################################
 
@@ -126,7 +171,7 @@ class Aplicacion:
                 self.estado = 'jugando'
 
     def inicio_actualizar(self):
-        pass
+        self.cargar_puntuacion()
 
     def inicio_graficos(self):
         self.screen.fill(Cian)
@@ -134,7 +179,7 @@ class Aplicacion:
         self.screen.blit(img_inicio,[-25, ALTO//2])
         self.dibujar_texto('1 SOLO JUGADOR', self.screen, [ANCHO // 2, ALTO // 2 + 200], TAMAÑO_TEXTO_INI, Naranja,
                            FUENTE_INI,centrado=True)
-        self.dibujar_texto('MÁXIMA PUNTUACIÓN', self.screen, [10,0], TAMAÑO_TEXTO_INI, Blanco,FUENTE_INI)
+        self.dibujar_texto('MÁXIMA PUNTUACIÓN: '+str(self.puntuacion_maxima), self.screen, [10,0], TAMAÑO_TEXTO_INI, Blanco,FUENTE_INI)
         pygame.display.update()
 
     ################################################FUNCIONES DE JUEGO EJECUTANDOSE#################################################
@@ -170,7 +215,20 @@ class Aplicacion:
         self.screen.fill(Negro)
         self.screen.blit(self.fondo, (BORDE//2,BORDE//2))
         self.dibujarLLaves()
-        self.dibujar_texto('MÁXIMA PUNTUACIÓN', self.screen, [ANCHO_JUEGO//2+200, 0], 18, Blanco,FUENTE_INI)
+        self.dibujar_texto('MÁXIMA PUNTUACIÓN '+str(self.puntuacion_maxima), self.screen, [ANCHO_JUEGO//2+200, 0], 18, Blanco,FUENTE_INI)
+        if len(self.llaves) == 5:
+            self.dibujar_texto('0/5 ', self.screen, [ANCHO_JUEGO//2+120, 0], 18, Blanco,FUENTE_INI)
+        if len(self.llaves) == 4:
+            self.dibujar_texto('1/5 ', self.screen, [ANCHO_JUEGO//2+120, 0], 18, Blanco,FUENTE_INI)
+        if len(self.llaves) == 3:
+            self.dibujar_texto('2/5 ', self.screen, [ANCHO_JUEGO//2+120, 0], 18, Blanco,FUENTE_INI)
+        if len(self.llaves) == 2:
+            self.dibujar_texto('3/5 ', self.screen, [ANCHO_JUEGO//2+120, 0], 18, Blanco,FUENTE_INI)
+        if len(self.llaves) == 1:
+            self.dibujar_texto('4/5 ', self.screen, [ANCHO_JUEGO//2+120, 0], 18, Blanco,FUENTE_INI)
+        # imagen_llave = pygame.image.load("imgs/llave_final.png")
+        # imagen_llave = pygame.transform.scale(imagen_llave, (self.ancho_celda-26, self.alto_celda-17))
+        # self.screen.blit(imagen_llave,([ANCHO_JUEGO//2+150,0]))
         self.dibujar_texto('PUNTUACIÓN: {}'.format(self.personaje.puntuacion),self.screen, [60, 0], 18, Blanco, FUENTE_INI)
         self.personaje.dibujarPerson(self.personaje.img_actual)
         self.personaje.dibujarVidas()
@@ -180,6 +238,7 @@ class Aplicacion:
 
     def pierde_vida(self):
         self.personaje.vidas -= 1
+        self.personaje.puntuacion -= 50
         if self.personaje.vidas == 0:
             self.estado = "GAME OVER"
         else:
@@ -207,4 +266,44 @@ class Aplicacion:
 
     def gameover_graficos(self):
         self.screen.fill(Cian)
+        img_inicio = pygame.image.load("imgs/restart.png")
+        self.screen.blit(img_inicio, [-70, ALTO // 2])
+        self.dibujar_texto("Press ESC to Exit", self.screen, [
+            ANCHO // 2, ALTO // 1.5], 36, (190, 190, 190), FUENTE_INI)
         pygame.display.update()
+
+
+    ###########################################FUNCIONES GANAR#####################################
+
+    def ganar_eventos(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                self.cargar_puntuacion()
+                self.reset_sin_iniciar()
+                self.estado = 'intro'
+
+    def ganar_actualizar(self):
+        if self.personaje.puntuacion > self.puntuacion_maxima:
+            self.puntuacion_maxima = self.personaje.puntuacion
+            conexion.Conexion.conectarBD(DBFILE)
+            info = []
+            fecha = datetime.now()
+            fecha_formateada = fecha.strftime("%d/%m/%Y")
+            info.append(self.puntuacion_maxima)
+            info.append(fecha_formateada)
+            conexion.Conexion.guardar_puntuacion(info)
+
+
+    def ganar_graficos(self):
+        self.screen.fill(Negro)
+        img_ganar = pygame.image.load("imgs/ganar.jpg")
+        self.screen.blit(img_ganar, [250,ALTO//2-250])
+        self.dibujar_texto("Tu puntuación ha sido de: "+str(self.personaje.puntuacion), self.screen, [178, ALTO // 1.5], 36, (Blanco), FUENTE_INI)
+        pygame.display.update()
+
+
+
