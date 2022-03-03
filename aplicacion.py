@@ -8,11 +8,14 @@ from conexion import *
 from Configuracion import *
 from Enemigo import *
 from datetime import datetime
+from pygame import mixer
 
 
 # INICIO
 pygame.init()
+mixer.init()
 vec = pygame.math.Vector2
+
 
 
 class Aplicacion:
@@ -169,6 +172,12 @@ class Aplicacion:
                 self.running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 self.estado = 'jugando'
+                pygame.mixer.music.load('music/Point-of-Clash.mp3')
+                pygame.mixer.music.set_volume(0.35)
+                pygame.mixer.music.play(-1, 0.0)
+                while pygame.mixer.music.get_busy():
+                    pygame.time.Clock().tick(10)
+                    break
 
     def inicio_actualizar(self):
         self.cargar_puntuacion()
@@ -265,7 +274,8 @@ class Aplicacion:
         pass
 
     def gameover_graficos(self):
-        self.screen.fill(Cian)
+        self.screen.fill(Gris)
+        self.dibujar_texto("GAME OVER", self.screen, [ ANCHO // 2 - 200, ALTO // 3], 58, (0,0,0), FUENTE_INI)
         img_inicio = pygame.image.load("imgs/restart.png")
         self.screen.blit(img_inicio, [-70, ALTO // 2])
         self.dibujar_texto("Press ESC to Exit", self.screen, [

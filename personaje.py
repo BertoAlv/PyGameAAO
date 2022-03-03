@@ -22,7 +22,7 @@ class Personaje:
         self.direccion_almacenada = None
         self.puede_moverse = True
         self.velocidad = 1
-        self.vidas = 2
+        self.vidas = 1
 
     def actualizar(self):
         if self.puede_moverse:
